@@ -1,7 +1,8 @@
 PARAMETERIZED SPI MASTER & SLAVE CORE IN VERILOG
 Hey there! This is a project I built to learn digital design and hardware description languages better. It's a fully synthesizable and parameterized Serial Peripheral Interface (SPI) IP core written in Verilog-2001.
 I designed both the Master and Slave modules from scratch and verified them in Xilinx Vivado across all 4 standard SPI modes.
-Features
+
+FEATURES
 Full-Duplex Communication: Simultaneous data transmission and reception between Master and Slave.
 All 4 SPI Modes Supported: Configurable via parameters (CPOL and CPHA):
 Mode 0: 
@@ -15,7 +16,8 @@ CPOL=1,CPHA=1 (Clock idle high, sample on 2nd edge)
 CDC Synchronizer: Added 3-stage flip-flop synchronizers on the slave side (SCLK, CS_N, and MOSI) to prevent metastability issues when receiving signals across clock domains.
 Clock Division: Custom clock divider that outputs timing strobes for sampling and shifting bits correctly.
 Self-Checking Testbench: A testbench that instantiates all 4 modes at once to automatically verify data transfers.
-How it Works:
+
+HOW IT WORKS
         +--------------------------------------------------------+
         |                      SPI MASTER                        |
         |                                                        |
@@ -38,13 +40,8 @@ How it Works:
         |   +---------------+            +-------------------+   |
         +--------------------------------------------------------+
 ​
-Project Structure:
-├── CLK_DIVIDER.v  # Generates SCLK and edge tick pulses
-├── SPI_MASTER.v   # FSM and logic for the SPI Master
-├── SPI_SLAVE.v    # Slave logic with CDC synchronizers
-└── SPI_TB.v       # Self-checking testbench for all 4 modes
 ​
-Verification & Results:
+VERIFICATION & RESULTS
 I simulated the entire design in AMD Vivado Simulator. To verify everything works properly:
 Master transmits: 0xA5
 Slave transmits: 0x3C
@@ -71,19 +68,3 @@ Simulation Terminal Output
 ==================================================
             SIMULATION COMPLETE
 ==================================================
-​
-Running the Simulation:
-In Vivado GUI
-Open Vivado and create a new project.
-Add CLK_DIVIDER.v, SPI_MASTER.v, and SPI_SLAVE.v as design sources.
-Add SPI_TB.v as a simulation source.
-Click Run Simulation -> Run Behavioral Simulation.
-Quick CLI Run (Vivado Terminal)
-xvlog CLK_DIVIDER.v SPI_MASTER.v SPI_SLAVE.v SPI_TB.v
-xelab SPI_TB -s top_sim -debug typical
-xsim top_sim -runall
-​
-What I Learned:
-Debugging timing shift bugs when handling CPOL=1 modes.
-Why Clock Domain Crossing (CDC) synchronization is essential when dealing with external SPI clocks.
-Structuring clean, modular RTL code with Verilog parameters.
