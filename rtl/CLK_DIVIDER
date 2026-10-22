@@ -1,0 +1,54 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: Mohammad Yasir
+// Design Name: SPI Core
+// Module Name: CLK_DIVIDER
+// Project Name: Parameterized SPI Master/Slave
+// Target Devices: FPGA
+// Description: Clock divider module that generates SCLK and timing strobes
+//              for SPI shift and sample operations.
+//////////////////////////////////////////////////////////////////////////////////
+
+module CLK_DIVIDER #(
+    parameter CPOL = 0
+)(
+    input  wire clk,
+    input  wire reset,
+    input  wire en,
+    output reg  sclk,
+    output reg  edge1_tick,
+    output reg  edge2_tick
+);
+
+    reg [7:0] counter;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            counter    <= 8'd0;
+            sclk       <= (CPOL != 0) ? 1'b1 : 1'b0;
+            edge1_tick <= 1'b0;
+            edge2_tick <= 1'b0;
+        end else if (en) begin
+            edge1_tick <= 1'b0;
+            edge2_tick <= 1'b0;
+
+            if (counter == 8'd4) begin
+                counter <= 8'd0;
+                sclk    <= ~sclk;
+                if (sclk == ((CPOL != 0) ? 1'b1 : 1'b0))
+                    edge1_tick <= 1'b1;
+                else
+                    edge2_tick <= 1'b1;
+            end else begin
+                counter <= counter + 1'b1;
+            end
+        end else begin
+            counter    <= 8'd0;
+            sclk       <= (CPOL != 0) ? 1'b1 : 1'b0;
+            edge1_tick <= 1'b0;
+            edge2_tick <= 1'b0;
+        end
+    end
+
+endmodule
