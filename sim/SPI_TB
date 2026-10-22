@@ -1,0 +1,156 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: Mohammad Yasir
+// Design Name: SPI Core Testbench
+// Module Name: SPI_TB
+// Project Name: Parameterized SPI Master/Slave
+// Target Devices: FPGA Simulation
+// Description: Direct Verilog testbench instantiating Master and Slave modules
+//              across all four SPI Modes (0, 1, 2, 3) to verify transmission integrity.
+//////////////////////////////////////////////////////////////////////////////////
+
+module SPI_TB;
+
+    reg clk;
+    reg reset;
+    reg start;
+    reg [7:0] master_tx_data;
+    reg [7:0] slave_tx_data;
+
+    wire [7:0] master_rx_data_m0, master_rx_data_m1, master_rx_data_m2, master_rx_data_m3;
+    wire [7:0] slave_rx_data_m0, slave_rx_data_m1, slave_rx_data_m2, slave_rx_data_m3;
+    wire busy_m0, busy_m1, busy_m2, busy_m3;
+    wire done_m0, done_m1, done_m2, done_m3;
+    wire slave_done_m0, slave_done_m1, slave_done_m2, slave_done_m3;
+
+    wire sclk_m0, sclk_m1, sclk_m2, sclk_m3;
+    wire mosi_m0, mosi_m1, mosi_m2, mosi_m3;
+    wire miso_m0, miso_m1, miso_m2, miso_m3;
+    wire cs_n_m0, cs_n_m1, cs_n_m2, cs_n_m3;
+
+    // Mode 0: CPOL=0, CPHA=0
+    SPI_MASTER #(.CPOL(0), .CPHA(0)) master_m0 (
+        .clk(clk), .reset(reset), .start(start), .tx_data(master_tx_data),
+        .miso(miso_m0), .sclk(sclk_m0), .mosi(mosi_m0), .cs_n(cs_n_m0),
+        .rx_data(master_rx_data_m0), .busy(busy_m0), .done(done_m0)
+    );
+    SPI_SLAVE #(.CPOL(0), .CPHA(0)) slave_m0 (
+        .clk(clk), .reset(reset), .sclk(sclk_m0), .cs_n(cs_n_m0),
+        .mosi(mosi_m0), .miso(miso_m0), .tx_data(slave_tx_data),
+        .rx_data(slave_rx_data_m0), .done(slave_done_m0)
+    );
+
+    // Mode 1: CPOL=0, CPHA=1
+    SPI_MASTER #(.CPOL(0), .CPHA(1)) master_m1 (
+        .clk(clk), .reset(reset), .start(start), .tx_data(master_tx_data),
+        .miso(miso_m1), .sclk(sclk_m1), .mosi(mosi_m1), .cs_n(cs_n_m1),
+        .rx_data(master_rx_data_m1), .busy(busy_m1), .done(done_m1)
+    );
+    SPI_SLAVE #(.CPOL(0), .CPHA(1)) slave_m1 (
+        .clk(clk), .reset(reset), .sclk(sclk_m1), .cs_n(cs_n_m1),
+        .mosi(mosi_m1), .miso(miso_m1), .tx_data(slave_tx_data),
+        .rx_data(slave_rx_data_m1), .done(slave_done_m1)
+    );
+
+    // Mode 2: CPOL=1, CPHA=0
+    SPI_MASTER #(.CPOL(1), .CPHA(0)) master_m2 (
+        .clk(clk), .reset(reset), .start(start), .tx_data(master_tx_data),
+        .miso(miso_m2), .sclk(sclk_m2), .mosi(mosi_m2), .cs_n(cs_n_m2),
+        .rx_data(master_rx_data_m2), .busy(busy_m2), .done(done_m2)
+    );
+    SPI_SLAVE #(.CPOL(1), .CPHA(0)) slave_m2 (
+        .clk(clk), .reset(reset), .sclk(sclk_m2), .cs_n(cs_n_m2),
+        .mosi(mosi_m2), .miso(miso_m2), .tx_data(slave_tx_data),
+        .rx_data(slave_rx_data_m2), .done(slave_done_m2)
+    );
+
+    // Mode 3: CPOL=1, CPHA=1
+    SPI_MASTER #(.CPOL(1), .CPHA(1)) master_m3 (
+        .clk(clk), .reset(reset), .start(start), .tx_data(master_tx_data),
+        .miso(miso_m3), .sclk(sclk_m3), .mosi(mosi_m3), .cs_n(cs_n_m3),
+        .rx_data(master_rx_data_m3), .busy(busy_m3), .done(done_m3)
+    );
+    SPI_SLAVE #(.CPOL(1), .CPHA(1)) slave_m3 (
+        .clk(clk), .reset(reset), .sclk(sclk_m3), .cs_n(cs_n_m3),
+        .mosi(mosi_m3), .miso(miso_m3), .tx_data(slave_tx_data),
+        .rx_data(slave_rx_data_m3), .done(slave_done_m3)
+    );
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $display("==================================================");
+        $display("          SPI MULTI-MODE TESTBENCH START          ");
+        $display("==================================================");
+
+        clk = 0;
+        reset = 1;
+        start = 0;
+        master_tx_data = 8'h00;
+        slave_tx_data  = 8'h00;
+
+        $display("[%0t ns] Applying Reset...", $time);
+        #20;
+        reset = 0;
+        $display("[%0t ns] Reset De-asserted.", $time);
+        #20;
+
+        master_tx_data = 8'hA5;
+        slave_tx_data  = 8'h3C;
+
+        $display("--------------------------------------------------");
+        $display("[%0t ns] Starting Transaction:", $time);
+        $display("          Master TX Data = 0x%02X", master_tx_data);
+        $display("          Slave  TX Data = 0x%02X", slave_tx_data);
+        $display("--------------------------------------------------");
+
+        start = 1;
+        #10;
+        start = 0;
+
+        wait(done_m0 && done_m1 && done_m2 && done_m3);
+        $display("[%0t ns] Transmission Completed across all SPI modes.", $time);
+        #50;
+
+        $display("\n==================================================");
+        $display("             VERIFICATION RESULTS                 ");
+        $display("==================================================");
+
+        if ((master_rx_data_m0 == slave_tx_data) && (slave_rx_data_m0 == master_tx_data)) begin
+            $display("[MODE 0 PASS] Master RX: 0x%02X | Slave RX: 0x%02X", master_rx_data_m0, slave_rx_data_m0);
+        end else begin
+            $display("[MODE 0 FAIL] Master RX: 0x%02X (Expected: 0x%02X) | Slave RX: 0x%02X (Expected: 0x%02X)",
+                     master_rx_data_m0, slave_tx_data, slave_rx_data_m0, master_tx_data);
+        end
+
+        if ((master_rx_data_m1 == slave_tx_data) && (slave_rx_data_m1 == master_tx_data)) begin
+            $display("[MODE 1 PASS] Master RX: 0x%02X | Slave RX: 0x%02X", master_rx_data_m1, slave_rx_data_m1);
+        end else begin
+            $display("[MODE 1 FAIL] Master RX: 0x%02X (Expected: 0x%02X) | Slave RX: 0x%02X (Expected: 0x%02X)",
+                     master_rx_data_m1, slave_tx_data, slave_rx_data_m1, master_tx_data);
+        end
+
+        if ((master_rx_data_m2 == slave_tx_data) && (slave_rx_data_m2 == master_tx_data)) begin
+            $display("[MODE 2 PASS] Master RX: 0x%02X | Slave RX: 0x%02X", master_rx_data_m2, slave_rx_data_m2);
+        end else begin
+            $display("[MODE 2 FAIL] Master RX: 0x%02X (Expected: 0x%02X) | Slave RX: 0x%02X (Expected: 0x%02X)",
+                     master_rx_data_m2, slave_tx_data, slave_rx_data_m2, master_tx_data);
+        end
+
+        if ((master_rx_data_m3 == slave_tx_data) && (slave_rx_data_m3 == master_tx_data)) begin
+            $display("[MODE 3 PASS] Master RX: 0x%02X | Slave RX: 0x%02X", master_rx_data_m3, slave_rx_data_m3);
+        end else begin
+            $display("[MODE 3 FAIL] Master RX: 0x%02X (Expected: 0x%02X) | Slave RX: 0x%02X (Expected: 0x%02X)",
+                     master_rx_data_m3, slave_tx_data, slave_rx_data_m3, master_tx_data);
+        end
+
+        $display("==================================================");
+        $display("            SIMULATION COMPLETE                   ");
+        $display("==================================================\n");
+
+        #50;
+        $finish;
+    end
+
+endmodule
